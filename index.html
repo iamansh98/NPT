@@ -472,5 +472,18 @@
             window.addEventListener('beforeunload',()=>{if(timer.running)timer.tick();timer.saveActive();});
         };
     </script>
+    <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./sw.js", {
+      scope: "./"
+    }).then(function () {
+      console.log("NEET TRACKER service worker registered");
+    }).catch(function (error) {
+      console.error("Service worker registration failed:", error);
+    });
+  });
+}
+    </script>
 </body>
 </html>
