@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEET TRACKER</title>
+    <meta name="theme-color" content="#0a0a0c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk5FRVQgVFJBQ0tFUiIsCiAgInNob3J0X25hbWUiOiAiTkVFVFRyYWNrZXIiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBhMGEwYyIsCiAgInRoZW1lX2NvbG9yIjogIzdjNGRmZiIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzI2NDAvMjY0MDcyMC5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0KICBdCn0=">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-deep: #0a0a0c;
+            --bg-card: #16161d;
+            --primary: #7c4dff;
+            --primary-light: #b47cff;
+            --accent: #00e676;
+            --text-main: #e0e0e0;
+            --text-dim: #949494;
+            --danger: #ff5252;
+            --warning: #ffd740;
+            --grad: linear-gradient(135deg, #7c4dff 0%, #3f51b5 100%);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            overflow-x: hidden;
+            padding-bottom: 90px;
+        }
+
+        /* UI Elements */
+        .glass-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .gradient-text {
+            background: var(--grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .stat-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #fff; margin: 5px 0; }
+
+        /* Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 75px;
+            background: rgba(10, 10, 12, 0.95);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.65rem;
+            flex: 1;
+        }
+
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 1.5rem; margin-bottom: 4px; font-style: normal; }
+
+        /* Views */
+        .view { display: none; animation: slideIn 0.3s ease-out; }
+        .view.active { display: block; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Buttons & Inputs */
+        .btn {
+            background: var(--grad);
+            border: none;
+            color: white;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-outline { background: transparent; border: 1.5px solid var(--primary); color: var(--primary); }
+        .btn-danger { border-color: var(--danger); color: var(--danger); }
+
+        select, input {
+            width: 100%;
+            background: #1c1c24;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin: 8px 0 15px 0;
+            font-size: 1rem;
+        }
+
+        /* Progress Bar */
+        .progress-box { background: #252530; height: 10px; border-radius: 10px; margin: 10px 0; overflow: hidden; }
+        .progress-fill { background: var(--grad); height: 100%; width: 0%; transition: width 0.6s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+
+        /* Custom Styles */
+        .timer-big { font-size: 4.5rem; font-weight: 800; text-align: center; margin: 25px 0; font-variant-numeric: tabular-nums; }
+        .subject-badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; background: rgba(124, 77, 255, 0.15); color: var(--primary-light); }
+        .hidden { display: none !important; }
+        .streak-fire { color: #ff9800; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+    </style>
+</head>
+<body>
+
+    <!-- App Header -->
+    <header style="padding: 20px 20px 0 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 1.5rem;" class="gradient-text">NEET TRACKER</h2>
+        <div id="streak-counter" style="font-weight:700; font-size:1.1rem; text-align:right;">
+            <span class="streak-fire">🔥</span> <span id="streak-val">0</span>
+            <div style="font-size:0.62rem; color:var(--text-dim); font-weight:500; margin-top:2px;">Best <span id="longest-streak">0</span> days</div>
+        </div>
+    </header>
+
+    <!-- Dashboard -->
+    <div id="view-home" class="view active">
+        <div class="glass-card">
+            <div class="stat-label">Daily Study Goal</div>
+            <div id="home-study-text" class="stat-value">0h / 8h</div>
+            <div class="progress-box"><div id="home-study-bar" class="progress-fill"></div></div>
+            
+            <div style="margin-top: 20px;" class="stat-label">Question Goal</div>
+            <div id="home-qs-text" class="stat-value">0 / 100</div>
+            <div class="progress-box"><div id="home-qs-bar" class="progress-fill" style="background: var(--accent);"></div></div>
+        </div>
+
+        <div class="grid-2" style="margin: 0 15px;">
+            <div class="glass-card" style="margin: 0;">
+                <div class="stat-label">Accuracy</div>
+                <div id="home-acc" class="stat-value">0%</div>
+            </div>
+            <div class="glass-card" style="margin: 0;">
+                <div class="stat-label">Syllabus</div>
+                <div id="home-prog" class="stat-value">0%</div>
+            </div>
+        </div>
+
+        <h3 style="margin: 25px 20px 10px 20px;">Priority Revision</h3>
+        <div id="revision-list" style="padding-bottom: 20px;">
+            <div style="text-align: center; padding: 20px; color: var(--text-dim);">No pending revisions. Good job!</div>
+        </div>
+    </div>
+
+    <!-- Subjects -->
+    <div id="view-subjects" class="view">
+        <div id="subject-main">
+            <div class="glass-card" onclick="ui.renderSubjectDetail('Physics')">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0">Physics</h3>
+                    <span id="sub-prog-Physics" class="subject-badge">0%</span>
+                </div>
+                <div class="progress-box"><div id="sub-bar-Physics" class="progress-fill"></div></div>
+            </div>
+            <div class="glass-card" onclick="ui.renderSubjectDetail('Chemistry')">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0">Chemistry</h3>
+                    <span id="sub-prog-Chemistry" class="subject-badge">0%</span>
+                </div>
+                <div class="progress-box"><div id="sub-bar-Chemistry" class="progress-fill"></div></div>
+            </div>
+            <div class="glass-card" onclick="ui.renderSubjectDetail('Botany')">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0">Botany</h3>
+                    <span id="sub-prog-Botany" class="subject-badge">0%</span>
+                </div>
+                <div class="progress-box"><div id="sub-bar-Botany" class="progress-fill"></div></div>
+            </div>
+            <div class="glass-card" onclick="ui.renderSubjectDetail('Zoology')">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0">Zoology</h3>
+                    <span id="sub-prog-Zoology" class="subject-badge">0%</span>
+                </div>
+                <div class="progress-box"><div id="sub-bar-Zoology" class="progress-fill"></div></div>
+            </div>
+        </div>
+
+        <div id="subject-detail" class="hidden">
+            <div style="padding: 0 20px;">
+                <button class="btn btn-outline" style="width: auto; padding: 8px 15px; margin-bottom: 15px;" onclick="ui.backToSubjects()">← Back</button>
+                <h2 id="detail-title" style="margin: 0 0 20px 0;">Subject</h2>
+                <div id="chapter-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timer -->
+    <div id="view-timer" class="view">
+        <div class="glass-card" style="text-align: center;">
+            <div class="stat-label">Currently Studying</div>
+            <select id="timer-sub" onchange="ui.popChapters('timer-sub', 'timer-ch')"></select>
+            <select id="timer-ch"></select>
+            
+            <div id="timer-display" class="timer-big">00:00:00</div>
+            
+            <div class="grid-2">
+                <button id="timer-start-btn" class="btn" onclick="timer.toggle()">Start</button>
+                <button class="btn btn-outline" onclick="timer.stop()">Save Session</button>
+            </div>
+            <button class="btn btn-outline btn-danger" style="margin-top:15px; border:none;" onclick="timer.reset()">Reset Timer</button>
+        </div>
+    </div>
+
+    <!-- Questions -->
+    <div id="view-questions" class="view">
+        <div class="glass-card">
+            <h3>Log Questions</h3>
+            <label class="stat-label">Subject</label>
+            <select id="qs-sub" onchange="ui.popChapters('qs-sub', 'qs-ch')"></select>
+            <label class="stat-label">Chapter</label>
+            <select id="qs-ch"></select>
+            
+            <div class="grid-2">
+                <div>
+                    <label class="stat-label">Correct</label>
+                    <input type="number" id="qs-cor" value="0" min="0">
+                </div>
+                <div>
+                    <label class="stat-label">Wrong</label>
+                    <input type="number" id="qs-wrg" value="0" min="0">
+                </div>
+            </div>
+            <label class="stat-label">Skipped</label>
+            <input type="number" id="qs-skip" value="0" min="0">
+            <div id="qs-preview" style="font-size:0.78rem; color:var(--text-dim); margin:-5px 0 12px;">Total: 0 • Attempted: 0 • Accuracy: 0%</div>
+            <label class="stat-label">Type</label>
+            <select id="qs-type">
+                <option>Practice</option>
+                <option>PYQ</option>
+                <option>DPP</option>
+                <option>Mock Test</option>
+            </select>
+            <button class="btn" onclick="data.logQuestions()">Log Practice Session</button>
+        </div>
+    </div>
+
+    <!-- Analytics -->
+    <div id="view-analytics" class="view">
+        <div class="grid-2" style="margin:15px;">
+            <div class="glass-card" style="margin:0;"><div class="stat-label">7-DAY STUDY</div><div id="stat-week-study" class="stat-value">0.0h</div></div>
+            <div class="glass-card" style="margin:0;"><div class="stat-label">7-DAY QUESTIONS</div><div id="stat-week-qs" class="stat-value">0</div></div>
+        </div>
+        <div class="grid-2" style="margin:15px;">
+            <div class="glass-card" style="margin:0;"><div class="stat-label">ATTEMPTED</div><div id="stat-attempted" class="stat-value">0</div></div>
+            <div class="glass-card" style="margin:0;"><div class="stat-label">ACCURACY</div><div id="stat-accuracy" class="stat-value">0%</div></div>
+        </div>
+        <div class="glass-card">
+            <h3 style="margin-top:0">Study Hours • Last 7 Days</h3>
+            <canvas id="chart-week" height="230"></canvas>
+        </div>
+        <div class="glass-card">
+            <h3 style="margin-top:0">Study Distribution</h3>
+            <canvas id="chart-sub" height="250"></canvas>
+        </div>
+        <div class="glass-card">
+            <h3 style="margin-top:0">Subject Accuracy</h3>
+            <canvas id="chart-accuracy" height="230"></canvas>
+        </div>
+        <div class="glass-card">
+            <h3 style="margin-top:0">Revision Queue</h3>
+            <div id="analytics-revision">No pending revisions.</div>
+        </div>
+        <div class="glass-card">
+            <h3>Backup & Data</h3>
+            <button class="btn btn-outline" style="margin-bottom:10px" onclick="data.export()">Export Data</button>
+            <button class="btn btn-outline" onclick="document.getElementById('import-input').click()">Import Data</button>
+            <input type="file" id="import-input" class="hidden" onchange="data.import(event)">
+            <button class="btn btn-outline btn-danger" style="margin-top:20px" onclick="data.clear()">Reset All Data</button>
+        </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="ui.navigate('home', this)"><i>🏠</i><span>Home</span></div>
+        <div class="nav-item" onclick="ui.navigate('subjects', this)"><i>📚</i><span>Syllabus</span></div>
+        <div class="nav-item" onclick="ui.navigate('timer', this)"><i>⏱️</i><span>Timer</span></div>
+        <div class="nav-item" onclick="ui.navigate('questions', this)"><i>📝</i><span>Questions</span></div>
+        <div class="nav-item" onclick="ui.navigate('analytics', this)"><i>📊</i><span>Stats</span></div>
+    </nav>
+
+    <script>
+        const SYLLABUS = {
+            Physics: ["Units & Measurements", "Kinematics", "Laws of Motion", "Work, Energy & Power", "System of Particles", "Gravitation", "Properties of Matter", "Thermodynamics", "Kinetic Theory", "Oscillations & Waves", "Electrostatics", "Current Electricity", "Magnetism", "EM Induction & AC", "Optics", "Modern Physics", "Electronic Devices"],
+            Chemistry: ["Basic Concepts", "Structure of Atom", "Classification of Elements", "Chemical Bonding", "States of Matter", "Thermodynamics", "Equilibrium", "Redox Reactions", "Hydrogen", "s-Block", "p-Block", "Organic Chemistry Basics", "Hydrocarbons", "Solid State", "Solutions", "Electrochemistry", "Chemical Kinetics", "Surface Chemistry", "Coordination Compounds", "Haloalkanes", "Alcohols & Phenols", "Biomolecules", "Polymers"],
+            Botany: ["The Living World", "Biological Classification", "Plant Kingdom", "Morphology of Plants", "Anatomy of Plants", "Cell: Unit of Life", "Cell Cycle", "Transport in Plants", "Mineral Nutrition", "Photosynthesis", "Respiration", "Plant Growth", "Reproduction", "Genetics & Inheritance", "Molecular Basis", "Biotechnology", "Ecology"],
+            Zoology: ["Animal Kingdom", "Structural Organization", "Biomolecules", "Digestion", "Breathing", "Body Fluids", "Excretion", "Locomotion", "Neural Control", "Chemical Coordination", "Human Reproduction", "Reproductive Health", "Evolution", "Human Health", "Microbes in Welfare"]
+        };
+
+        let state = {
+            chData: {}, // key: "Subject:Chapter"
+            logs: [],   // {date, sub, ch, duration, correct, wrong, total}
+            streak: 0,
+            lastDate: null
+        };
+
+        const data = {
+            init: () => {
+                const saved = localStorage.getItem('neet_tracker_v1');
+                if (saved) { try { state = JSON.parse(saved); } catch(e) {} }
+                state.logs = Array.isArray(state.logs) ? state.logs : []; state.chData = state.chData || {};
+                state.streak = Number(state.streak)||0; state.longestStreak = Number(state.longestStreak)||0; state.activeTimer = state.activeTimer || null;
+                Object.keys(SYLLABUS).forEach(sub => SYLLABUS[sub].forEach(ch => {
+                    const key=`${sub}:${ch}`, d=state.chData[key]||{};
+                    state.chData[key]={status:d.status||'Not Started',prog:Number(d.prog)||0,time:Number(d.time)||0,cor:Number(d.cor)||0,att:Number(d.att)||0,skipped:Number(d.skipped)||0,revCount:Number(d.revCount)||0,nextRev:d.nextRev||null};
+                }));
+                state.logs.forEach(l=>{l.duration=Number(l.duration)||0;l.cor=Number(l.cor)||0;l.total=Number(l.total)||0;l.skipped=Number(l.skipped)||0;l.wrong=Number(l.wrong ?? Math.max(0,l.total-l.cor-l.skipped))||0;l.attempted=Number(l.attempted ?? Math.max(0,l.total-l.skipped))||0;});
+                data.save(); ui.refreshDashboard();
+            },
+            save: () => localStorage.setItem('neet_tracker_v1', JSON.stringify(state)),
+            logQuestions: () => {
+                const sub=document.getElementById('qs-sub').value,ch=document.getElementById('qs-ch').value;
+                const cor=Math.max(0,parseInt(document.getElementById('qs-cor').value)||0),wrg=Math.max(0,parseInt(document.getElementById('qs-wrg').value)||0),skipped=Math.max(0,parseInt(document.getElementById('qs-skip').value)||0);
+                const total=cor+wrg+skipped,attempted=cor+wrg;if(!total)return alert('Enter at least one question.');
+                state.logs.push({date:new Date().toISOString().split('T')[0],sub,ch,duration:0,cor,wrong:wrg,skipped,attempted,total,type:document.getElementById('qs-type').value});
+                const d=state.chData[`${sub}:${ch}`];d.cor+=cor;d.att+=attempted;d.skipped+=skipped;data.save();ui.refreshDashboard();
+                alert(`Session logged: ${total} questions • ${attempted} attempted • ${skipped} skipped`);['qs-cor','qs-wrg','qs-skip'].forEach(id=>document.getElementById(id).value=0);ui.updateQuestionPreview();
+            },
+            updateChapter:(key,field,val)=>{state.chData[key][field]=val;data.save();ui.refreshDashboard();},
+            export:()=>{data.save();const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`neet_tracker_data_${new Date().toISOString().split('T')[0]}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},
+            import:(e)=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=evt=>{try{const imported=JSON.parse(evt.target.result);if(!imported||!imported.chData)throw 0;state=imported;data.save();location.reload();}catch(err){alert('Invalid backup file.');}};r.readAsText(file);},
+            clear:()=>{if(confirm('Erase all study data permanently?')){localStorage.removeItem('neet_tracker_v1');location.reload();}}
+        };
+
+        const ui = {
+            navigate: (viewId, el) => {
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById('view-' + viewId).classList.add('active');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                el.classList.add('active');
+                if (viewId === 'analytics') ui.renderCharts();
+                if (viewId === 'home') ui.refreshDashboard();
+            },
+            popChapters: (subId, chId) => {
+                const sub = document.getElementById(subId).value;
+                const chSel = document.getElementById(chId);
+                chSel.innerHTML = SYLLABUS[sub].map(c => `<option>${c}</option>`).join('');
+            },
+            updateQuestionPreview:()=>{const cor=parseInt(document.getElementById('qs-cor').value)||0,wrg=parseInt(document.getElementById('qs-wrg').value)||0,skipped=parseInt(document.getElementById('qs-skip').value)||0,attempted=cor+wrg,total=attempted+skipped,acc=attempted?Math.round(cor/attempted*100):0;document.getElementById('qs-preview').innerText=`Total: ${total} • Attempted: ${attempted} • Accuracy: ${acc}%`;},
+            renderSubjectDetail: (sub) => {
+                document.getElementById('subject-main').classList.add('hidden');
+                document.getElementById('subject-detail').classList.remove('hidden');
+                document.getElementById('detail-title').innerText = sub;
+                const list = document.getElementById('chapter-list');
+                list.innerHTML = SYLLABUS[sub].map(ch => {
+                    const k = `${sub}:${ch}`;
+                    const d = state.chData[k];
+                    return `
+                        <div class="glass-card">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                                <div style="font-weight:700;">${ch}</div>
+                                <div class="subject-badge">${d.status}</div>
+                            </div>
+                            <div class="stat-label">Progress: ${d.prog}%</div>
+                            <input type="range" value="${d.prog}" onchange="data.updateChapter('${k}', 'prog', parseInt(this.value))">
+                            <div class="grid-2">
+                                <select onchange="data.updateChapter('${k}', 'status', this.value)">
+                                    <option ${d.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                                    <option ${d.status === 'Studying' ? 'selected' : ''}>Studying</option>
+                                    <option ${d.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                    <option ${d.status === 'Revision Due' ? 'selected' : ''}>Revision Due</option>
+                                </select>
+                                <button class="btn btn-outline" style="padding:5px;" onclick="ui.setRev('${k}')">Set Rev Date</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+            backToSubjects: () => {
+                document.getElementById('subject-main').classList.remove('hidden');
+                document.getElementById('subject-detail').classList.add('hidden');
+                ui.refreshDashboard();
+            },
+            setRev: (key) => {
+                const date = prompt("Enter Revision Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+                if(date) { data.updateChapter(key, 'nextRev', date); alert("Revision set!"); }
+            },
+            refreshDashboard:()=>{
+                const today=new Date().toISOString().split('T')[0],logs=state.logs.filter(l=>l.date===today),totalMs=logs.reduce((a,b)=>a+(Number(b.duration)||0),0),hrs=totalMs/3600000;
+                document.getElementById('home-study-text').innerText=`${hrs.toFixed(1)}h / 8h`;document.getElementById('home-study-bar').style.width=Math.min(hrs/8*100,100)+'%';
+                const qCount=logs.reduce((a,b)=>a+(Number(b.total)||0),0);document.getElementById('home-qs-text').innerText=`${qCount} / 100`;document.getElementById('home-qs-bar').style.width=Math.min(qCount,100)+'%';
+                let comp=0,tot=0,cor=0,att=0;Object.keys(state.chData).forEach(k=>{tot++;if(state.chData[k].status==='Completed')comp++;cor+=Number(state.chData[k].cor)||0;att+=Number(state.chData[k].att)||0;});
+                document.getElementById('home-prog').innerText=tot?Math.round(comp/tot*100)+'%':'0%';document.getElementById('home-acc').innerText=att?Math.round(cor/att*100)+'%':'0%';
+                const st=ui.calculateStreaks();state.streak=st.current;state.longestStreak=st.longest;document.getElementById('streak-val').innerText=st.current;document.getElementById('longest-streak').innerText=st.longest;data.save();
+                Object.keys(SYLLABUS).forEach(sub=>{const ks=Object.keys(state.chData).filter(k=>k.startsWith(sub+':')),p=ks.length?Math.round(ks.filter(k=>state.chData[k].status==='Completed').length/ks.length*100):0;document.getElementById(`sub-prog-${sub}`).innerText=p+'%';document.getElementById(`sub-bar-${sub}`).style.width=p+'%';});
+                const revs=Object.keys(state.chData).filter(k=>state.chData[k].nextRev===today),rc=document.getElementById('revision-list');rc.innerHTML=revs.length?revs.map(k=>`<div class="glass-card" style="border-left:5px solid var(--warning);"><div style="font-weight:700;">${k.split(':')[1]}</div><div class="stat-label">${k.split(':')[0]}</div></div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--text-dim);">No pending revisions. Good job!</div>';
+            },
+            calculateStreaks:()=>{
+                const q=new Set();state.logs.forEach(l=>{if((Number(l.duration)||0)>=1800000)q.add(l.date);});const dates=[...q].sort();let longest=0,run=0,prev=null;dates.forEach(ds=>{const d=new Date(ds+'T00:00:00');run=prev&&Math.round((d-prev)/86400000)===1?run+1:1;longest=Math.max(longest,run);prev=d;});
+                let current=0,cursor=new Date(),todayStr=cursor.toISOString().split('T')[0];if(q.has(todayStr)||(()=>{cursor.setDate(cursor.getDate()-1);return q.has(cursor.toISOString().split('T')[0]);})()){while(q.has(cursor.toISOString().split('T')[0])){current++;cursor.setDate(cursor.getDate()-1);}}return{current,longest};
+            },
+            renderCharts: () => {
+                const today = new Date();
+                const dates = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date(today); d.setHours(0,0,0,0); d.setDate(d.getDate()-i);
+                    dates.push(d.toISOString().split('T')[0]);
+                }
+                const dayHours = dates.map(ds => state.logs.filter(l => l.date === ds).reduce((a,b)=>a+(Number(b.duration)||0),0)/3600000);
+                const dayQs = dates.map(ds => state.logs.filter(l => l.date === ds).reduce((a,b)=>a+(Number(b.total)||0),0));
+                const weekLogs = state.logs.filter(l => dates.includes(l.date));
+                const weekMs = weekLogs.reduce((a,b)=>a+(Number(b.duration)||0),0);
+                const weekQs = weekLogs.reduce((a,b)=>a+(Number(b.total)||0),0);
+                const attempted = weekLogs.reduce((a,b)=>a+(Number(b.attempted ?? ((Number(b.correct)||Number(b.cor)||0)+(Number(b.wrong)||0)))||0),0);
+                const correct = weekLogs.reduce((a,b)=>a+(Number(b.correct ?? b.cor)||0),0);
+                document.getElementById('stat-week-study').innerText=(weekMs/3600000).toFixed(1)+'h';
+                document.getElementById('stat-week-qs').innerText=weekQs;
+                document.getElementById('stat-attempted').innerText=attempted;
+                document.getElementById('stat-accuracy').innerText=attempted?Math.round(correct/attempted*100)+'%':'0%';
+                const revs=Object.values(state.chData).filter(d=>d.nextRev).length;
+                document.getElementById('analytics-revision').innerText=revs?`${revs} chapter${revs===1?'':'s'} have a revision date set.`:'No pending revisions.';
+
+                if (window._neetCharts) Object.values(window._neetCharts).forEach(c=>c&&c.destroy());
+                window._neetCharts={};
+                const labels=dates.map(ds=>{const d=new Date(ds+'T00:00:00');return d.toLocaleDateString(undefined,{weekday:'short'});});
+                window._neetCharts.week=new Chart(document.getElementById('chart-week'),{type:'bar',data:{labels,datasets:[{label:'Study hours',data:dayHours,backgroundColor:'#7c4dff',borderRadius:6}]},options:{plugins:{legend:{labels:{color:'#fff'}}},scales:{x:{ticks:{color:'#aaa'},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#aaa'},grid:{color:'#292933'}}}}});
+                const subjects=Object.keys(SYLLABUS);
+                const subMs=subjects.map(s=>state.logs.filter(l=>l.sub===s).reduce((a,b)=>a+(Number(b.duration)||0),0)/60000);
+                window._neetCharts.sub=new Chart(document.getElementById('chart-sub'),{type:'doughnut',data:{labels:subjects,datasets:[{data:subMs,backgroundColor:['#7c4dff','#00e676','#ffd740','#ff5252'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+                const acc=subjects.map(s=>{let c=0,a=0;state.logs.filter(l=>l.sub===s).forEach(l=>{c+=Number(l.correct??l.cor)||0;a+=Number(l.attempted??((Number(l.correct??l.cor)||0)+(Number(l.wrong)||0)))||0});return a?Math.round(c/a*100):0;});
+                window._neetCharts.acc=new Chart(document.getElementById('chart-accuracy'),{type:'bar',data:{labels:subjects,datasets:[{label:'Accuracy %',data:acc,backgroundColor:'#00e676',borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{labels:{color:'#fff'}}},scales:{x:{beginAtZero:true,max:100,ticks:{color:'#aaa'},grid:{color:'#292933'}},y:{ticks:{color:'#aaa'},grid:{display:false}}}}});
+            }
+        };
+
+        const timer={
+            running:false,start:0,elapsed:0,interval:null,
+            saveActive:()=>{state.activeTimer=(timer.running||timer.elapsed)?{running:timer.running,startedAt:timer.start,elapsed:timer.elapsed,sub:document.getElementById('timer-sub').value,ch:document.getElementById('timer-ch').value}:null;data.save();},
+            restore:()=>{const a=state.activeTimer;if(!a)return;if(a.sub&&SYLLABUS[a.sub]){document.getElementById('timer-sub').value=a.sub;ui.popChapters('timer-sub','timer-ch');if(a.ch&&SYLLABUS[a.sub].includes(a.ch))document.getElementById('timer-ch').value=a.ch;}timer.elapsed=Number(a.elapsed)||0;if(a.running){timer.running=true;timer.start=Number(a.startedAt)||Date.now()-timer.elapsed;timer.interval=setInterval(timer.tick,1000);document.getElementById('timer-start-btn').innerText='Pause';document.getElementById('timer-start-btn').classList.add('btn-outline');}else document.getElementById('timer-start-btn').innerText=timer.elapsed?'Resume':'Start';timer.tick();},
+            toggle:()=>{const b=document.getElementById('timer-start-btn');if(!timer.running){timer.running=true;timer.start=Date.now()-timer.elapsed;timer.interval=setInterval(timer.tick,1000);b.innerText='Pause';b.classList.add('btn-outline');timer.saveActive();}else{timer.tick();timer.running=false;clearInterval(timer.interval);b.innerText='Resume';b.classList.remove('btn-outline');timer.saveActive();}},
+            tick:()=>{if(timer.running)timer.elapsed=Date.now()-timer.start;const sec=Math.floor(timer.elapsed/1000);document.getElementById('timer-display').innerText=new Date(sec*1000).toISOString().substr(11,8);if(timer.running&&sec%5===0)timer.saveActive();},
+            stop:()=>{if(timer.elapsed<60000)return alert('Session must be at least 1 minute');timer.tick();const sub=document.getElementById('timer-sub').value,ch=document.getElementById('timer-ch').value;state.logs.push({date:new Date().toISOString().split('T')[0],sub,ch,duration:timer.elapsed,cor:0,wrong:0,skipped:0,attempted:0,total:0,type:'Study'});state.chData[`${sub}:${ch}`].time+=timer.elapsed;clearInterval(timer.interval);timer.running=false;timer.elapsed=0;timer.interval=null;state.activeTimer=null;data.save();timer.renderReset();ui.refreshDashboard();alert('Study session saved!');},
+            renderReset:()=>{document.getElementById('timer-display').innerText='00:00:00';const b=document.getElementById('timer-start-btn');b.innerText='Start';b.classList.remove('btn-outline');},
+            reset:()=>{clearInterval(timer.interval);timer.running=false;timer.elapsed=0;timer.interval=null;state.activeTimer=null;data.save();timer.renderReset();}
+        };
+        window.onload=()=>{
+            data.init();
+            ['timer-sub','qs-sub'].forEach(id=>{const sel=document.getElementById(id);sel.innerHTML=Object.keys(SYLLABUS).map(s=>`<option>${s}</option>`).join('');ui.popChapters(id,id==='timer-sub'?'timer-ch':'qs-ch');});
+            ['qs-cor','qs-wrg','qs-skip'].forEach(id=>document.getElementById(id).addEventListener('input',ui.updateQuestionPreview));ui.updateQuestionPreview();timer.restore();
+            window.addEventListener('beforeunload',()=>{if(timer.running)timer.tick();timer.saveActive();});
+        };
+    </script>
+</body>
+</html>
